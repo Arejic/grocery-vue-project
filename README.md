@@ -19,7 +19,7 @@ npm run build
 ```
 npm run lint
 ```
-### Ejecuta los comand que siguen la carpeta grocery-backend
+### Ejecuta los comandos que siguen en la carpeta grocery-backend
 ```
 Vuejs---Vuetify-JS-How-to-create-a-Responsive-E-Grocery-Website-System-Grocery-e-Commerce-Website-main/grocery-backend
 ```

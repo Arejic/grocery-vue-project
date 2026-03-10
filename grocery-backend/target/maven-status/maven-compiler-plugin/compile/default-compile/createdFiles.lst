@@ -3,6 +3,7 @@ com/tuapp/grocery_backend/dto/ChatRequest.class
 com/tuapp/grocery_backend/tools/ProductoTool.class
 com/tuapp/grocery_backend/GroceryBackendApplication.class
 com/tuapp/grocery_backend/controller/CarritoController.class
+com/tuapp/grocery_backend/controller/PedidoController.class
 com/tuapp/grocery_backend/service/AssistantService.class
 com/tuapp/grocery_backend/repository/ProductoRepository.class
 com/tuapp/grocery_backend/controller/ProductoController.class

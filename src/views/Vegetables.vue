@@ -136,7 +136,7 @@ export default {
     increase(item){
       if(item.qty < item.stock) item.qty++
       else alert("No hay más stock disponible")
-    },
+  },
 
     decrease(item){
       if(item.qty > 1) item.qty--

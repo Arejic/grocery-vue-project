@@ -1,3 +1,4 @@
+```vue
 <template>
   <v-app>
     <Navbar />
@@ -6,6 +7,7 @@
       <v-row>
         <v-col cols="12">
 
+          <!-- HERO -->
           <v-card class="mx-auto rounded-xl" flat>
             <v-img src="cover2.png" max-height="100%" max-width="100%" contain>
 
@@ -23,98 +25,198 @@
 
               <v-card-text class="ml-10">
                 <v-row>
-
                   <v-col cols="4">
                     <v-text-field
                       v-model="busqueda"
                       label="Search your daily groceries"
-                      class="d-none d-sm-none d-md-flex"
                       prepend-inner-icon="mdi-magnify"
                       solo
-                      flat
                       rounded
                       outlined
-                      @keyup.enter="buscarProducto"
-                    ></v-text-field>
+                      clearable
+                      hide-details
+                    />
                   </v-col>
-
-                  <v-col cols="2" class="marginLeft">
-                    <v-btn
-                      color="green"
-                      rounded
-                      dark
-                      x-large
-                      class="py-7 d-none d-sm-none d-md-flex"
-                      @click="buscarProducto"
-                    >
-                      Search
-                    </v-btn>
-                  </v-col>
-
                 </v-row>
               </v-card-text>
 
             </v-img>
           </v-card>
 
-          <v-toolbar flat color="transparent">
+          <!-- CATEGORÍAS -->
+          <v-toolbar flat color="transparent" class="mt-4">
             <v-toolbar-title class="text-h6">Category</v-toolbar-title>
             <v-spacer></v-spacer>
 
             <v-btn-toggle v-model="toggle_exclusive" group color="#49D9A0">
-              <v-btn>
-                <v-icon>mdi-chevron-left</v-icon>
-              </v-btn>
-
-              <v-btn>
-                <v-icon>mdi-chevron-right</v-icon>
-              </v-btn>
+              <v-btn><v-icon>mdi-chevron-left</v-icon></v-btn>
+              <v-btn><v-icon>mdi-chevron-right</v-icon></v-btn>
             </v-btn-toggle>
-
           </v-toolbar>
 
           <Category />
 
-          <v-toolbar flat color="transparent" class="mt-5">
-            <v-toolbar-title class="text-h6">
-              Popular Product
-            </v-toolbar-title>
+          <!-- TITULO BUSQUEDA (SOLO SI SE USA) -->
+          <div v-if="busqueda">
+            <v-toolbar flat color="transparent" class="mt-6">
+              <v-toolbar-title class="text-h6">
+                Search Results
+              </v-toolbar-title>
+            </v-toolbar>
+          </div>
 
-            <v-spacer></v-spacer>
-
-            <v-btn rounded color="green" dark class="px-8">
-              See All
-            </v-btn>
-          </v-toolbar>
-
-          <Product />
-
-          <v-card flat color="#E2F2E5" class="rounded-xl mt-8">
+          <!-- PRODUCTOS POPULARES -->
+          <v-card flat color="#E2F2E5" class="rounded-xl mt-4 pa-6">
 
             <v-toolbar flat color="transparent" class="mb-4">
-              <v-toolbar-title class="text-h6 mt-5">
-                Popular Bundle Pack
+              <v-toolbar-title class="text-h6">
+                Popular Products
               </v-toolbar-title>
-
-              <v-spacer></v-spacer>
             </v-toolbar>
 
-            <Pack />
+            <v-row>
+
+              <v-col
+                v-for="item in productosRandom"
+                :key="'random-'+item.id"
+                cols="12"
+                sm="6"
+                md="3"
+              >
+
+                <v-card class="pa-4 product-card" outlined>
+
+                  <div class="text-subtitle-1 font-weight-medium">
+                    {{ item.nombre }}
+                  </div>
+
+                  <div class="text-caption grey--text mb-2">
+                    {{ item.variedad }}
+                  </div>
+
+                  <div class="text-h6 font-weight-bold mb-3">
+                    ${{ item.precio }}
+                  </div>
+
+                  <div class="d-flex align-center justify-space-between">
+
+                    <div class="d-flex align-center">
+
+                      <v-btn icon small @click="decrease(item)">
+                        <v-icon>mdi-minus</v-icon>
+                      </v-btn>
+
+                      <span class="mx-2">{{ item.qty }}</span>
+
+                      <v-btn icon small @click="increase(item)">
+                        <v-icon color="green">mdi-plus</v-icon>
+                      </v-btn>
+
+                    </div>
+
+                    <div class="d-flex">
+
+                      <v-btn fab small class="wishlist-btn" @click="addToWishlist(item)">
+                        <v-icon color="#FF6D59">mdi-heart</v-icon>
+                      </v-btn>
+
+                      <v-btn color="green" dark fab small class="cart-btn" @click="addToCart(item)">
+                        <v-icon>mdi-cart</v-icon>
+                      </v-btn>
+
+                    </div>
+
+                  </div>
+
+                </v-card>
+
+              </v-col>
+
+            </v-row>
 
           </v-card>
 
-          <v-card flat color="#FAFAFA" class="mt-8 py-5 px-16">
+          <!-- RESULTADOS DE BUSQUEDA -->
+          <!-- RESULTADOS DE BUSQUEDA -->
+<div v-if="busqueda">
 
-            <div
-              style="
-              position: absolute;
-              margin-left: auto;
-              margin-right: auto;
-              left: 0;
-              right: 0;
-              text-align: center;
-            "
-            >
+  <v-toolbar flat color="transparent" class="mt-6">
+    <v-toolbar-title class="text-h6">
+      Search Results
+    </v-toolbar-title>
+  </v-toolbar>
+
+  <v-row>
+
+    <v-col
+      v-for="item in productosFiltrados"
+      :key="item.id"
+      cols="12"
+      sm="6"
+      md="3"
+    >
+
+      <v-card class="pa-4 product-card" outlined>
+
+        <div class="text-subtitle-1 font-weight-medium">
+          {{ item.nombre }}
+        </div>
+
+        <div class="text-caption grey--text">
+          {{ item.variedad }}
+        </div>
+
+        <div class="text-h6 font-weight-bold mb-3">
+          ${{ item.precio }}
+        </div>
+
+        <div class="d-flex align-center justify-space-between">
+
+          <div class="d-flex align-center">
+
+            <v-btn icon small @click="decrease(item)">
+              <v-icon>mdi-minus</v-icon>
+            </v-btn>
+
+            <span class="mx-2">{{ item.qty }}</span>
+
+            <v-btn icon small @click="increase(item)">
+              <v-icon color="green">mdi-plus</v-icon>
+            </v-btn>
+
+          </div>
+
+          <div class="d-flex">
+
+            <v-btn fab small class="wishlist-btn" @click="addToWishlist(item)">
+              <v-icon color="#FF6D59">mdi-heart</v-icon>
+            </v-btn>
+
+            <v-btn color="green" dark fab small class="cart-btn" @click="addToCart(item)">
+              <v-icon>mdi-cart</v-icon>
+            </v-btn>
+
+          </div>
+
+        </div>
+
+      </v-card>
+
+    </v-col>
+
+    <v-col v-if="productosFiltrados.length === 0" cols="12">
+      <v-alert type="info">
+        No hay productos que coincidan
+      </v-alert>
+    </v-col>
+
+  </v-row>
+
+</div>
+          <!-- CLIENTES -->
+          <v-card flat color="#FAFAFA" class="mt-10 py-5 px-16">
+
+            <div style="position:absolute;margin-left:auto;margin-right:auto;left:0;right:0;text-align:center;">
               <h3>What Our Clients Say</h3>
             </div>
 
@@ -122,6 +224,7 @@
 
           </v-card>
 
+          <!-- PARTNERS -->
           <v-toolbar flat color="transparent" class="mt-8">
             <v-toolbar-title class="text-h6">
               Our Trusted Partner
@@ -130,69 +233,18 @@
 
           <Partner />
 
-          <v-card
-            flat
-            color="#E2F2E5"
-            class="rounded-xl mtop mbottom mx-10 pa-4"
-            height="350"
-          >
-
-            <v-row>
-
-              <v-col cols="12" xs="12" sm="12" md="5">
-                <v-card
-                  class="rounded-xl mt-n16 ml-16 mobile"
-                  outlined
-                  flat
-                  height="450"
-                  width="200"
-                >
-                  <v-img src="mobile.png"></v-img>
-                </v-card>
-              </v-col>
-
-              <v-col cols="12" xs="12" sm="6" md="7">
-                <h1 class="mt-16">Download App</h1>
-
-                <p>
-                  Lorem ipsum dolor sit amet consectetur adipisicing elit.<br />
-                  Provident sequi esse tempore maiores quasi quia non.<br />
-                  Itaque laboriosam dicta nostrum accusantium assumenda,<br />
-                  vitae ab ut vel tenetur minima natus commodi!
-                </p>
-
-                <v-btn color="black" dark class="mb-10">
-                  <v-icon color="white" left>fab fa-apple</v-icon>
-                  App Store
-                </v-btn>
-
-                <v-btn color="black" dark class="ml-4 mb-10">
-                  <v-icon color="white" left>fab fa-google-play</v-icon>
-                  Play Store
-                </v-btn>
-
-              </v-col>
-
-            </v-row>
-
-          </v-card>
-
         </v-col>
       </v-row>
     </v-container>
 
-    <Footer />
-
+    <Footer/>
   </v-app>
 </template>
 
 <script>
-
 import Navbar from "../components/Navbar"
 import Footer from "../components/Footer"
 import Category from "../components/Category.vue"
-import Product from "../components/Product.vue"
-import Pack from "../components/Pack.vue"
 import Client from "../components/Client.vue"
 import Partner from "../components/Partner.vue"
 
@@ -200,96 +252,144 @@ export default {
 
   name: "Home",
 
-  data: () => ({
-    toggle_exclusive: 1,
-    busqueda: ""
-  }),
-
-  components: {
+  components:{
     Navbar,
     Footer,
     Category,
-    Product,
-    Pack,
     Client,
     Partner
   },
 
-  methods: {
+  data(){
+    return{
+      toggle_exclusive:1,
+      busqueda:"",
+      productos:[]
+    }
+  },
 
-    buscarProducto() {
+  mounted(){
+    this.cargarProductos()
+  },
 
-      if (!this.busqueda) return
+  computed:{
 
-      this.$router.push({
-        path: "/search",
-        query: { q: this.busqueda }
-      })
+    productosFiltrados(){
+
+      const texto = this.busqueda.toLowerCase()
+
+      return this.productos.filter(p =>
+        (p.nombre || "").toLowerCase().includes(texto) ||
+        (p.variedad || "").toLowerCase().includes(texto)
+      )
+    },
+
+    productosRandom(){
+      return [...this.productos]
+        .sort(() => Math.random() - 0.5)
+        .slice(0,10)
+    }
+
+  },
+
+  methods:{
+
+    async cargarProductos(){
+
+      try{
+
+        const response = await fetch("http://localhost:8081/api/productos")
+
+        if(!response.ok) throw new Error("Error API")
+
+        const data = await response.json()
+
+        this.productos = data.map(p => ({
+          id:p.id,
+          nombre:p.nombre || "",
+          variedad:p.variedad || "",
+          precio:p.precio || 0,
+          stock:p.stock || 10,
+          qty:1
+        }))
+
+      }catch(error){
+        console.error("Error cargando productos:", error)
+      }
+
+    },
+
+    increase(item){
+      if(item.qty < item.stock){
+        item.qty++
+      }
+    },
+
+    decrease(item){
+      if(item.qty > 1){
+        item.qty--
+      }
+    },
+
+    async addToCart(item){
+
+      try{
+
+        await fetch("http://localhost:8081/api/carrito/agregar",{
+          method:"POST",
+          headers:{
+            "Content-Type":"application/x-www-form-urlencoded"
+          },
+          body:new URLSearchParams({
+            nombre:item.nombre,
+            cantidad:item.qty
+          })
+        })
+
+      }catch(error){
+        console.error("Error carrito", error)
+      }
+
+    },
+
+    addToWishlist(item){
+
+      let wishlist = JSON.parse(localStorage.getItem("wishlist")) || []
+
+      const existe = wishlist.find(p => p.id === item.id)
+
+      if(!existe){
+        wishlist.push(item)
+        localStorage.setItem("wishlist", JSON.stringify(wishlist))
+      }
 
     }
 
   }
 
 }
-
 </script>
 
-<style>
+<style scoped>
 
-.marginLeft{
-  margin-left:-90px;
+.product-card{
+  transition:0.2s;
 }
 
-.mtop{
-  margin-top:100px;
+.product-card:hover{
+  transform:translateY(-5px);
+  box-shadow:0 8px 20px rgba(0,0,0,0.1);
 }
 
-.mbottom{
-  margin-bottom:100px;
+.cart-btn{
+  margin-left:8px;
+  border:2px solid #e0e0e0;
 }
 
-.v-card.borderme{
-  border:2px solid green !important;
-}
-
-.v-card.borderout{
-  border:1px solid #d5f0db !important;
-}
-
-.v-btn:not(.v-btn--round).v-size--default.add{
-  min-width:0px !important;
-}
-
-.theme--light.v-sheet--outlined.mobile{
-  border:2px solid black !important;
-}
-
-@media only screen and (max-width:600px){
-
-  h2.title1{
-    font-size:15px;
-  }
-
-  h2.title2{
-    font-size:15px;
-  }
-
-  .top{
-    margin-top:20px;
-  }
-
-}
-
-@media only screen and (min-width:600px){
-  .top{
-    margin-top:70px;
-  }
-}
-
-@media only screen and (min-width:768px){
-  .top{
-    margin-top:120px;
-  }
+.wishlist-btn{
+  border:2px solid #e0e0e0;
+  background:white;
 }
 
 </style>
+```

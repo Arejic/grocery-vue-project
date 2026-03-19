@@ -6,11 +6,12 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "backend": "mvn spring-boot:run",          
-    "dev": "concurrently \"npm run backend\" \"npm run serve\""  
+    "backend": "mvn spring-boot:run",
+    "dev": "concurrently \"npm run backend\" \"npm run serve\""
   },
   "dependencies": {
     "@fortawesome/vue-fontawesome": "^2.0.6",
+    "axios": "^1.13.6",
     "core-js": "^3.6.5",
     "vue": "^2.6.11",
     "vue-router": "^3.2.0",

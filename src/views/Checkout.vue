@@ -1,9 +1,48 @@
 <template>
   <v-container class="mt-10" style="max-width:500px">
-    <h2 class="mb-6">Paga utilizando una nueva tarjeta</h2>
+    <h2 class="mb-6">Pago y Dirección de Envío</h2>
 
     <v-form ref="form" v-model="valido">
-      <!-- Número tarjeta -->
+
+      <!-- 📍 DIRECCIÓN -->
+      <v-text-field
+        label="Dirección"
+        placeholder="Calle, número, colonia"
+        v-model="direccion"
+        :rules="[direccionValida]"
+        required
+      />
+
+      <v-row>
+        <v-col cols="6">
+          <v-text-field
+            label="Ciudad"
+            v-model="ciudad"
+            :rules="[ciudadValida]"
+            required
+          />
+        </v-col>
+
+        <v-col cols="6">
+          <v-text-field
+            label="Código Postal"
+            v-model="cp"
+            :rules="[cpValido]"
+            required
+          />
+        </v-col>
+      </v-row>
+
+      <v-text-field
+        label="Teléfono"
+        v-model="telefono"
+        :rules="[telefonoValido]"
+        required
+      />
+
+      <v-divider class="my-6"></v-divider>
+
+      <!-- 💳 TARJETA -->
       <v-text-field
         label="Número de Tarjeta"
         placeholder="1234 5678 9012 3456"
@@ -36,7 +75,6 @@
 
       <v-text-field
         label="Titular de la Tarjeta"
-        placeholder="Nombre completo"
         v-model="titular"
         :rules="[titularValido]"
         required
@@ -44,26 +82,18 @@
 
       <v-text-field
         label="Código de Seguridad"
-        placeholder="CVV"
         type="password"
         v-model="cvv"
         :rules="[cvvValido]"
         required
       />
 
-      <v-select
-        label="Cuotas"
-        :items="cuotas"
-        v-model="cuotaSeleccionada"
-        :rules="[cuotaValida]"
-        required
-      />
-
       <v-checkbox
-        label="Guardar los datos de esta tarjeta para pagos futuros"
+        label="Guardar datos para futuras compras"
         v-model="guardar"
       />
 
+      <!-- BOTONES -->
       <v-row class="mt-6">
         <v-col cols="6">
           <v-btn color="green" block @click="pagar">
@@ -88,14 +118,20 @@ export default {
     const currentYear = new Date().getFullYear() % 100;
 
     return {
+      // 📍 Dirección
+      direccion: "",
+      ciudad: "",
+      cp: "",
+      telefono: "",
+
+      // 💳 Pago
       tarjeta: "",
       mes: "",
       anio: "",
       titular: "",
       cvv: "",
+
       guardar: false,
-      cuotas: ["1 cuota", "3 cuotas", "6 cuotas", "12 cuotas"],
-      cuotaSeleccionada: null,
       valido: false,
       currentYear
     };
@@ -103,8 +139,26 @@ export default {
 
   methods: {
 
+    // 📍 VALIDACIONES
+    direccionValida(v) {
+      return !!v || "La dirección es obligatoria";
+    },
+
+    ciudadValida(v) {
+      return !!v || "La ciudad es obligatoria";
+    },
+
+    cpValido(v) {
+      return /^\d{5}$/.test(v) || "CP inválido";
+    },
+
+    telefonoValido(v) {
+      return /^\d{10}$/.test(v) || "Teléfono inválido";
+    },
+
+    // 💳 VALIDACIONES
     tarjetaValida(v) {
-      return /^\d{16}$/.test(v.replace(/\s/g, "")) || "Número de tarjeta inválido";
+      return /^\d{16}$/.test(v.replace(/\s/g, "")) || "Número inválido";
     },
 
     mesValido(v) {
@@ -114,19 +168,15 @@ export default {
 
     anioValido(v) {
       const a = parseInt(v);
-      return (a >= this.currentYear) || `Año inválido (>= ${this.currentYear})`;
+      return (a >= this.currentYear) || `Año inválido`;
     },
 
     titularValido(v) {
-      return !!v || "El titular no puede estar vacío";
+      return !!v || "El titular es obligatorio";
     },
 
     cvvValido(v) {
       return /^\d{3,4}$/.test(v) || "CVV inválido";
-    },
-
-    cuotaValida(v) {
-      return !!v || "Debes seleccionar una cuota";
     },
 
     async pagar() {
@@ -136,12 +186,10 @@ export default {
       try {
 
         const carritoRes = await fetch("http://localhost:8081/api/carrito");
-        if (!carritoRes.ok) throw new Error("Error cargando carrito");
-
         const productosCarrito = await carritoRes.json();
 
-        if (!productosCarrito || productosCarrito.length === 0) {
-          alert("El carrito está vacío");
+        if (!productosCarrito.length) {
+          alert("Carrito vacío");
           return;
         }
 
@@ -157,19 +205,27 @@ export default {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
+
+            // 📍 ENVÍO
+            direccion: this.direccion,
+            ciudad: this.ciudad,
+            codigoPostal: this.cp,
+            telefono: this.telefono,
+
+            // 💳 PAGO
             tarjeta: this.tarjeta,
             titular: this.titular,
             mes: this.mes,
             anio: this.anio,
             cvv: this.cvv,
-            cuota: this.cuotaSeleccionada,
+
             estado: "EN_PROCESO",
             fecha: new Date(),
             productos: productos
           })
         });
 
-        if (!pedidoRes.ok) throw new Error("Error al registrar el pedido");
+        if (!pedidoRes.ok) throw new Error();
 
         await fetch("http://localhost:8081/api/carrito", {
           method: "DELETE"
@@ -178,10 +234,8 @@ export default {
         this.$router.push("/pago-exitoso");
 
       } catch (error) {
-
-        console.error("Error al procesar el pago:", error);
-        alert("Ocurrió un error al procesar el pago");
-
+        console.error(error);
+        alert("Error al procesar el pago");
       }
 
     }

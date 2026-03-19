@@ -8,13 +8,15 @@
 
       <h2 class="mb-4 text-center">Inicio de sesión</h2>
 
+      <!-- Email -->
       <v-text-field
-        v-model="username"
-        label="Usuario"
+        v-model="email"
+        label="Correo"
         outlined
         dense
       />
 
+      <!-- Contraseña -->
       <v-text-field
         v-model="password"
         :type="showPassword ? 'text' : 'password'"
@@ -25,6 +27,7 @@
         dense
       />
 
+      <!-- Botón -->
       <v-btn
         color="green"
         block
@@ -36,6 +39,7 @@
         Entrar
       </v-btn>
 
+      <!-- Mensajes -->
       <v-alert
         v-if="errorMessage"
         type="error"
@@ -61,10 +65,12 @@
 </template>
 
 <script>
+import store from "@/store"; // Vuex store
+
 export default {
   data() {
     return {
-      username: "",
+      email: "",
       password: "",
       showPassword: false,
       loading: false,
@@ -73,44 +79,66 @@ export default {
     };
   },
   methods: {
+    // Función de redirección según rol
+    redirectUser(rol) {
+      if (rol === "admin") {
+        this.$router.push("/admin");
+      } else if (rol === "cliente") {
+        this.$router.push("/"); // Home para cliente
+      } else {
+        this.$router.push("/");
+      }
+    },
+
+    // Login
     async login() {
       this.errorMessage = "";
       this.successMessage = "";
+      this.loading = true;
 
-      if (!this.username || !this.password) {
-        this.errorMessage = "Ingresa usuario y contraseña";
+      if (!this.email || !this.password) {
+        this.errorMessage = "Ingresa correo y contraseña";
+        this.loading = false;
         return;
       }
 
-      this.loading = true;
-
       try {
-        // Enviamos credenciales como URL-encoded
-        const params = new URLSearchParams();
-        params.append("username", this.username);
-        params.append("password", this.password);
-
         const res = await fetch("http://localhost:8081/auth/login", {
           method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: params.toString()
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: this.email, password: this.password })
         });
 
         const data = await res.json();
 
-        if (res.ok) {
-          this.successMessage = "Login correcto!";
-          setTimeout(() => this.$router.push("/admin"), 500);
-        } else {
-          this.errorMessage = data.message || "Usuario o contraseña incorrectos";
+        if (!res.ok) {
+          this.errorMessage = data.message || "Correo o contraseña incorrectos";
+          return;
         }
 
+        // Guardar usuario en Vuex y localStorage
+        store.dispatch("login", data.user);
+
+        this.successMessage = "Login correcto!";
+
+        // Redirección según rol
+        setTimeout(() => this.redirectUser(data.user.rol), 500);
+
       } catch (err) {
-        console.error("Error login:", err);
-        this.errorMessage = "No se pudo conectar con el servidor";
+        console.error(err);
+        this.errorMessage = "Error de conexión con el servidor";
       } finally {
         this.loading = false;
       }
+    }
+  },
+  mounted() {
+    // Si ya hay usuario logueado, cargarlo y redirigir según rol
+    const user = localStorage.getItem("user");
+    if (user) {
+      const parsedUser = JSON.parse(user);
+      store.dispatch("login", parsedUser);
+      this.redirectUser(parsedUser.rol);
     }
   }
 };

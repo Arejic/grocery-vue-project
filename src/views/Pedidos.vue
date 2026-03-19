@@ -1,87 +1,111 @@
 <template>
-<v-container>
+  <v-container>
 
-<h1 class="mb-6">📦 Mis Pedidos</h1>
+    <h1 class="mb-6">📦 Mis Pedidos</h1>
 
-<v-alert v-if="!pedidos.length" type="info">
-No tienes pedidos todavía
-</v-alert>
+    <v-alert v-if="!pedidos.length" type="info">
+      No tienes pedidos todavía
+    </v-alert>
 
-<v-card
-v-for="pedido in pedidos"
-:key="pedido.id"
-class="mb-4 pa-4"
-outlined
->
+    <v-card
+      v-for="pedido in pedidos"
+      :key="pedido.id"
+      class="mb-4 pa-4"
+      outlined
+    >
 
-<div class="d-flex justify-space-between">
+      <!-- HEADER -->
+      <div class="d-flex justify-space-between">
 
-<div>
-<strong>Pedido #{{ pedido.id }}</strong>
-<div class="grey--text text-caption">
-{{ new Date(pedido.fecha).toLocaleDateString() }}
-</div>
-</div>
+        <div>
+          <strong>Pedido #{{ pedido.id }}</strong>
 
-<v-chip color="orange" dark>
-🚚 En proceso de envío
-</v-chip>
+          <div class="grey--text text-caption">
+            {{ new Date(pedido.fecha).toLocaleDateString() }}
+          </div>
+        </div>
 
-</div>
+        <v-chip color="orange" dark>
+          🚚 En proceso de envío
+        </v-chip>
 
-<v-divider class="my-3"></v-divider>
+      </div>
 
-<div
-v-for="prod in pedido.productos"
-:key="prod.nombre"
-class="d-flex justify-space-between"
->
+      <!-- 📍 UBICACIÓN -->
+      <div class="mt-2 grey--text text-caption">
+        📍 <b>Envío a:</b> {{ pedido.direccion || "Sin dirección" }}
+      </div>
 
-<span>{{ prod.nombre }} x{{ prod.cantidad }}</span>
+      <v-divider class="my-3"></v-divider>
 
-<span>${{ (prod.precio * prod.cantidad).toFixed(2) }}</span>
+      <!-- PRODUCTOS -->
+      <div
+        v-for="prod in pedido.productos"
+        :key="prod.nombre"
+        class="d-flex justify-space-between"
+      >
 
-</div>
+        <span>{{ prod.nombre }} x{{ prod.cantidad }}</span>
 
-</v-card>
+        <span>
+          ${{ (prod.precio * prod.cantidad).toFixed(2) }}
+        </span>
 
-</v-container>
+      </div>
+
+      <!-- TOTAL -->
+      <v-divider class="my-2"></v-divider>
+
+      <div class="d-flex justify-space-between font-weight-bold">
+        <span>Total</span>
+        <span>${{ calcularTotal(pedido) }}</span>
+      </div>
+
+    </v-card>
+
+  </v-container>
 </template>
 
 <script>
 export default{
 
-name:"Pedidos",
+  name:"Pedidos",
 
-data(){
-return{
-pedidos:[]
-}
-},
+  data(){
+    return{
+      pedidos:[]
+    }
+  },
 
-mounted(){
-this.cargarPedidos()
-},
+  mounted(){
+    this.cargarPedidos()
+  },
 
-methods:{
+  methods:{
 
-async cargarPedidos(){
+    async cargarPedidos(){
 
-try{
+      try{
 
-const res = await fetch("http://localhost:8081/api/pedidos")
+        const res = await fetch("http://localhost:8081/api/pedidos")
 
-if(!res.ok) throw new Error("Error cargando pedidos")
+        if(!res.ok) throw new Error("Error cargando pedidos")
 
-this.pedidos = await res.json()
+        this.pedidos = await res.json()
 
-}catch(e){
-console.error(e)
-}
+      }catch(e){
+        console.error(e)
+      }
 
-}
+    },
 
-}
+    calcularTotal(pedido){
+      return pedido.productos
+        .reduce((acc,p) => acc + (p.precio * p.cantidad),0)
+        .toFixed(2)
+    }
+
+  }
 
 }
 </script>

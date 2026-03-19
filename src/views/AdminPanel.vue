@@ -4,100 +4,53 @@
     <!-- Encabezado -->
     <div class="d-flex justify-space-between align-center mb-6">
       <h1>Panel Admin - Productos</h1>
-      <v-btn color="green" dark @click="abrirDialogo()">
-        <v-icon left>mdi-plus</v-icon>
-        Agregar Producto
-      </v-btn>
+      <div class="font-weight-bold">{{ usuario.nombre || "Invitado" }}</div>
     </div>
 
     <!-- Productos -->
     <v-row>
       <v-col v-for="item in productos" :key="item.id" cols="12" sm="6" md="4" lg="3">
         <v-card class="pa-4 product-card" outlined>
-
-          <!-- Imagen -->
           <div class="text-center">
-            <v-img
-              :src="getImage(item.imagenProducto)"
-              contain
-              height="180"
-            />
+            <v-img :src="getImage(item.imagenProducto)" contain height="180" />
           </div>
-
           <div class="mt-4 text-h6 font-weight-medium">{{ item.nombre }}</div>
+          <div class="grey--text text-caption mb-1"><b>Variedad:</b> {{ item.variedad || 'Sin variedad' }}</div>
+          <div class="text-h5 font-weight-bold mb-2">${{ item.precio }}</div>
+          <div class="grey--text text-caption mb-2"><b>Stock:</b> {{ item.stock }}</div>
 
-          <div class="grey--text text-caption mb-1">
-            <b>Variedad:</b> {{ item.variedad || 'Sin variedad' }}
-          </div>
-
-          <div class="text-h5 font-weight-bold mb-2">
-            ${{ item.precio }}
-          </div>
-
-          <div class="grey--text text-caption mb-2">
-            <b>Stock:</b> {{ item.stock }}
-          </div>
-
-          <!-- Botones -->
           <div class="d-flex justify-end">
             <v-btn icon large color="blue" @click="abrirDialogo(item)">
               <v-icon size="28">mdi-pencil</v-icon>
             </v-btn>
-
             <v-btn icon large color="red" @click="eliminarProducto(item.id)">
               <v-icon size="28">mdi-delete</v-icon>
             </v-btn>
           </div>
-
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Dialogo -->
+    <!-- Dialogo agregar/editar producto -->
     <v-dialog v-model="dialog" max-width="500">
       <v-card>
-
-        <v-card-title>
-          {{ editando ? "Editar Producto" : "Nuevo Producto" }}
-        </v-card-title>
-
+        <v-card-title>{{ editando ? "Editar Producto" : "Nuevo Producto" }}</v-card-title>
         <v-card-text>
-
           <v-text-field v-model="producto.nombre" label="Nombre" />
           <v-text-field v-model="producto.variedad" label="Variedad" />
-
-          <v-text-field
-            v-model.number="producto.precio"
-            label="Precio"
-            type="number"
-          />
-
-          <v-text-field
-            v-model.number="producto.stock"
-            label="Stock"
-            type="number"
-          />
+          <v-text-field v-model.number="producto.precio" label="Precio" type="number" />
+          <v-text-field v-model.number="producto.stock" label="Stock" type="number" />
 
           <v-radio-group v-model.number="producto.categoriaId" label="Categoría">
             <v-radio label="Fruta" :value="1" />
             <v-radio label="Verdura" :value="2" />
           </v-radio-group>
 
-          <v-text-field
-            v-model="producto.imagenProducto"
-            label="URL o nombre de imagen"
-          />
+          <v-text-field v-model="producto.imagenProducto" label="URL o nombre de imagen" />
 
-          <!-- Preview -->
           <div v-if="producto.imagenProducto" class="mt-2 text-center">
-            <v-img
-              :src="getImage(producto.imagenProducto)"
-              contain
-              height="120"
-              width="120"
-            />
+            <v-img :src="getImage(producto.imagenProducto)" contain height="120" width="120" />
           </div>
-
         </v-card-text>
 
         <v-card-actions>
@@ -105,24 +58,15 @@
           <v-btn color="grey" @click="dialog=false">Cancelar</v-btn>
           <v-btn color="green" @click="guardarProducto">Guardar</v-btn>
         </v-card-actions>
-
       </v-card>
     </v-dialog>
 
-    <!-- 🔔 NOTIFICACIÓN -->
+    <!-- Notificación -->
     <v-dialog v-model="dialogNotif" max-width="400">
       <v-card class="pa-6 text-center" :color="notifColor" outlined>
-
-        <v-icon size="64" :color="notifIconColor">
-          {{ notifIcon }}
-        </v-icon>
-
+        <v-icon size="64" :color="notifIconColor">{{ notifIcon }}</v-icon>
         <h2 class="mt-4">{{ notifMessage }}</h2>
-
-        <v-btn :color="notifIconColor" class="mt-4" @click="dialogNotif = false">
-          Cerrar
-        </v-btn>
-
+        <v-btn :color="notifIconColor" class="mt-4" @click="dialogNotif=false">Cerrar</v-btn>
       </v-card>
     </v-dialog>
 
@@ -131,111 +75,80 @@
 
 <script>
 export default {
-
   data() {
     return {
       productos: [],
       dialog: false,
       editando: false,
-
-      producto: {
-        id: null,
-        nombre: "",
-        variedad: "",
-        precio: 0,
-        stock: 0,
-        categoriaId: 1,
-        imagenProducto: ""
-      },
-
-      dialogNotif:false,
-      notifMessage:"",
-      notifColor:"#e8f5e9",
-      notifIcon:"mdi-check-circle",
-      notifIconColor:"green",
+      producto: { id:null, nombre:"", variedad:"", precio:0, stock:0, categoriaId:1, imagenProducto:"" },
+      dialogNotif: false,
+      notifMessage: "",
+      notifColor: "#e8f5e9",
+      notifIcon: "mdi-check-circle",
+      notifIconColor: "green",
+      usuario: { nombre: "Invitado", email:"", imagen:"" }
     };
   },
 
   mounted() {
     this.cargarProductos();
+    this.cargarUsuario();
   },
 
   methods: {
+    cargarUsuario() {
+      const user = JSON.parse(localStorage.getItem("usuario"));
+      if (user) this.usuario = user;
+    },
 
     getImage(img){
-      if(!img) return "/default.webp"
-      if(img.startsWith("http")) return img
-      return `http://localhost:8081/api/productos/images/${img}`
+      if(!img) return "/default.webp";
+      if(img.startsWith("http")) return img;
+      return `http://localhost:8081/api/productos/images/${img}`;
     },
 
     mostrarNotif(texto, tipo="success"){
-
       const tipos = {
         success:{ color:"#e8f5e9", icon:"mdi-check-circle", iconColor:"green" },
         error:{ color:"#ffebee", icon:"mdi-alert-circle", iconColor:"red" },
         warning:{ color:"#fff3e0", icon:"mdi-delete", iconColor:"orange" },
         info:{ color:"#e3f2fd", icon:"mdi-information", iconColor:"blue" }
-      }
-
-      const t = tipos[tipo]
-
-      this.notifMessage = texto
-      this.notifColor = t.color
-      this.notifIcon = t.icon
-      this.notifIconColor = t.iconColor
-      this.dialogNotif = true
-
-      setTimeout(() => this.dialogNotif = false, 2500)
+      };
+      const t = tipos[tipo];
+      this.notifMessage = texto;
+      this.notifColor = t.color;
+      this.notifIcon = t.icon;
+      this.notifIconColor = t.iconColor;
+      this.dialogNotif = true;
+      setTimeout(()=>this.dialogNotif=false, 2500);
     },
 
     async cargarProductos() {
       try {
         const res = await fetch("http://localhost:8081/api/productos");
         const data = await res.json();
-
-        // 🔥 ORDEN DESC (nuevos arriba)
         this.productos = data
-          .sort((a,b) => b.id - a.id)
-          .map(p => ({
-            id: p.id,
-            nombre: p.nombre,
-            variedad: p.variedad || "Sin variedad",
-            precio: p.precio,
-            stock: p.stock || 0,
-            categoriaId: p.categoriaId,
-            imagenProducto: p.imagen || ""
+          .sort((a,b)=>b.id - a.id)
+          .map(p=>({
+            id:p.id,
+            nombre:p.nombre,
+            variedad:p.variedad||"Sin variedad",
+            precio:p.precio,
+            stock:p.stock||0,
+            categoriaId:p.categoriaId,
+            imagenProducto:p.imagen||""
           }));
-
-      } catch (err) {
-        console.error(err);
-        this.mostrarNotif("Error cargando productos", "error");
-      }
+      } catch(err){ console.error(err); this.mostrarNotif("Error cargando productos","error"); }
     },
 
-    abrirDialogo(item = null) {
-
-      if (item) {
-        this.editando = true;
-        this.producto = { ...item };
-      } else {
-        this.editando = false;
-        this.producto = {
-          id: null,
-          nombre: "",
-          variedad: "",
-          precio: 0,
-          stock: 0,
-          categoriaId: 1,
-          imagenProducto: ""
-        };
-      }
-
+    abrirDialogo(item=null) {
+      this.editando = !!item;
+      this.producto = item ? { ...item } : { id:null, nombre:"", variedad:"", precio:0, stock:0, categoriaId:1, imagenProducto:"" };
       this.dialog = true;
     },
 
     async guardarProducto() {
       try {
-
         const body = {
           nombre: this.producto.nombre,
           variedad: this.producto.variedad,
@@ -244,70 +157,35 @@ export default {
           categoriaId: this.producto.categoriaId,
           imagen: this.producto.imagenProducto
         };
-
         const url = this.editando
           ? `http://localhost:8081/api/productos/${this.producto.id}`
           : `http://localhost:8081/api/productos`;
-
         const res = await fetch(url, {
-          method: this.editando ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
+          method: this.editando?"PUT":"POST",
+          headers: {"Content-Type":"application/json"},
           body: JSON.stringify(body)
         });
-
-        if (!res.ok) throw new Error();
-
+        if(!res.ok) throw new Error();
         await this.cargarProductos();
         this.dialog = false;
-
-        this.mostrarNotif(
-          this.editando
-            ? "✏️ Producto actualizado"
-            : "✅ Producto agregado",
-          "success"
-        );
-
-      } catch (err) {
-        console.error(err);
-        this.mostrarNotif("❌ Error al guardar", "error");
-      }
+        this.mostrarNotif(this.editando?"✏️ Producto actualizado":"✅ Producto agregado","success");
+      } catch(err){ console.error(err); this.mostrarNotif("❌ Error al guardar","error"); }
     },
 
     async eliminarProducto(id) {
-
-      if (!confirm("¿Eliminar producto?")) return;
-
-      try {
-        await fetch(`http://localhost:8081/api/productos/${id}`, {
-          method: "DELETE"
-        });
-
-        this.productos = this.productos.filter(p => p.id !== id);
-
-        this.mostrarNotif("🗑 Producto eliminado", "warning");
-
-      } catch (err) {
-        console.error(err);
-        this.mostrarNotif("❌ Error al eliminar", "error");
-      }
+      if(!confirm("¿Eliminar producto?")) return;
+      try{
+        await fetch(`http://localhost:8081/api/productos/${id}`, { method:"DELETE" });
+        this.productos = this.productos.filter(p=>p.id!==id);
+        this.mostrarNotif("🗑 Producto eliminado","warning");
+      } catch(err){ console.error(err); this.mostrarNotif("❌ Error al eliminar","error"); }
     }
-
   }
-
 };
 </script>
 
 <style scoped>
-.product-card{
-  transition:0.2s;
-  margin-bottom:12px;
-}
-.product-card:hover{
-  transform:translateY(-5px);
-  box-shadow:0 8px 20px rgba(0,0,0,0.1);
-}
-.v-col{
-  padding-left:6px!important;
-  padding-right:6px!important;
-}
+.product-card{transition:0.2s;margin-bottom:12px;}
+.product-card:hover{transform:translateY(-5px);box-shadow:0 8px 20px rgba(0,0,0,0.1);}
+.v-col{padding-left:6px!important;padding-right:6px!important;}
 </style>

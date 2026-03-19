@@ -1,214 +1,313 @@
 <template>
-<v-container>
+  <v-container>
 
-<h1 class="mb-6">Panel Admin - Productos</h1>
+    <!-- Encabezado -->
+    <div class="d-flex justify-space-between align-center mb-6">
+      <h1>Panel Admin - Productos</h1>
+      <v-btn color="green" dark @click="abrirDialogo()">
+        <v-icon left>mdi-plus</v-icon>
+        Agregar Producto
+      </v-btn>
+    </div>
 
-<v-btn
-color="green"
-class="mb-6"
-@click="abrirDialogo"
->
-Agregar Producto
-</v-btn>
+    <!-- Productos -->
+    <v-row>
+      <v-col v-for="item in productos" :key="item.id" cols="12" sm="6" md="4" lg="3">
+        <v-card class="pa-4 product-card" outlined>
 
-<v-row>
+          <!-- Imagen -->
+          <div class="text-center">
+            <v-img
+              :src="getImage(item.imagenProducto)"
+              contain
+              height="180"
+            />
+          </div>
 
-<v-col
-v-for="p in productos"
-:key="p.id"
-cols="12"
-sm="6"
-md="4"
-lg="3"
->
+          <div class="mt-4 text-h6 font-weight-medium">{{ item.nombre }}</div>
 
-<v-card elevation="3">
+          <div class="grey--text text-caption mb-1">
+            <b>Variedad:</b> {{ item.variedad || 'Sin variedad' }}
+          </div>
 
-<v-card-title>
-{{ p.nombre }}
-</v-card-title>
+          <div class="text-h5 font-weight-bold mb-2">
+            ${{ item.precio }}
+          </div>
 
-<v-card-text>
+          <div class="grey--text text-caption mb-2">
+            <b>Stock:</b> {{ item.stock }}
+          </div>
 
-<p><b>Precio:</b> ${{ p.precio }}</p>
-<p>{{ p.descripcion }}</p>
+          <!-- Botones -->
+          <div class="d-flex justify-end">
+            <v-btn icon large color="blue" @click="abrirDialogo(item)">
+              <v-icon size="28">mdi-pencil</v-icon>
+            </v-btn>
 
-</v-card-text>
+            <v-btn icon large color="red" @click="eliminarProducto(item.id)">
+              <v-icon size="28">mdi-delete</v-icon>
+            </v-btn>
+          </div>
 
-<v-card-actions>
+        </v-card>
+      </v-col>
+    </v-row>
 
-<v-btn
-color="blue"
-text
-@click="editarProducto(p)"
->
-Editar
-</v-btn>
+    <!-- Dialogo -->
+    <v-dialog v-model="dialog" max-width="500">
+      <v-card>
 
-<v-btn
-color="red"
-text
-@click="eliminarProducto(p.id)"
->
-Eliminar
-</v-btn>
+        <v-card-title>
+          {{ editando ? "Editar Producto" : "Nuevo Producto" }}
+        </v-card-title>
 
-</v-card-actions>
+        <v-card-text>
 
-</v-card>
+          <v-text-field v-model="producto.nombre" label="Nombre" />
+          <v-text-field v-model="producto.variedad" label="Variedad" />
 
-</v-col>
+          <v-text-field
+            v-model.number="producto.precio"
+            label="Precio"
+            type="number"
+          />
 
-</v-row>
+          <v-text-field
+            v-model.number="producto.stock"
+            label="Stock"
+            type="number"
+          />
 
-<!-- DIALOGO -->
+          <v-radio-group v-model.number="producto.categoriaId" label="Categoría">
+            <v-radio label="Fruta" :value="1" />
+            <v-radio label="Verdura" :value="2" />
+          </v-radio-group>
 
-<v-dialog v-model="dialog" max-width="500">
+          <v-text-field
+            v-model="producto.imagenProducto"
+            label="URL o nombre de imagen"
+          />
 
-<v-card>
+          <!-- Preview -->
+          <div v-if="producto.imagenProducto" class="mt-2 text-center">
+            <v-img
+              :src="getImage(producto.imagenProducto)"
+              contain
+              height="120"
+              width="120"
+            />
+          </div>
 
-<v-card-title>
-{{ editando ? "Editar Producto" : "Nuevo Producto" }}
-</v-card-title>
+        </v-card-text>
 
-<v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="grey" @click="dialog=false">Cancelar</v-btn>
+          <v-btn color="green" @click="guardarProducto">Guardar</v-btn>
+        </v-card-actions>
 
-<v-text-field
-v-model="producto.nombre"
-label="Nombre"
-/>
+      </v-card>
+    </v-dialog>
 
-<v-text-field
-v-model="producto.precio"
-label="Precio"
-type="number"
-/>
+    <!-- 🔔 NOTIFICACIÓN -->
+    <v-dialog v-model="dialogNotif" max-width="400">
+      <v-card class="pa-6 text-center" :color="notifColor" outlined>
 
-<v-textarea
-v-model="producto.descripcion"
-label="Descripción"
-/>
+        <v-icon size="64" :color="notifIconColor">
+          {{ notifIcon }}
+        </v-icon>
 
-</v-card-text>
+        <h2 class="mt-4">{{ notifMessage }}</h2>
 
-<v-card-actions>
+        <v-btn :color="notifIconColor" class="mt-4" @click="dialogNotif = false">
+          Cerrar
+        </v-btn>
 
-<v-spacer/>
+      </v-card>
+    </v-dialog>
 
-<v-btn color="grey" @click="dialog=false">
-Cancelar
-</v-btn>
-
-<v-btn color="green" @click="guardarProducto">
-Guardar
-</v-btn>
-
-</v-card-actions>
-
-</v-card>
-
-</v-dialog>
-
-</v-container>
+  </v-container>
 </template>
 
 <script>
 export default {
 
-data(){
-return{
+  data() {
+    return {
+      productos: [],
+      dialog: false,
+      editando: false,
 
-productos:[],
+      producto: {
+        id: null,
+        nombre: "",
+        variedad: "",
+        precio: 0,
+        stock: 0,
+        categoriaId: 1,
+        imagenProducto: ""
+      },
 
-dialog:false,
+      dialogNotif:false,
+      notifMessage:"",
+      notifColor:"#e8f5e9",
+      notifIcon:"mdi-check-circle",
+      notifIconColor:"green",
+    };
+  },
 
-editando:false,
+  mounted() {
+    this.cargarProductos();
+  },
 
-producto:{
-id:null,
-nombre:"",
-precio:0,
-descripcion:""
-}
+  methods: {
 
-}
-},
+    getImage(img){
+      if(!img) return "/default.webp"
+      if(img.startsWith("http")) return img
+      return `http://localhost:8081/api/productos/images/${img}`
+    },
 
-mounted(){
-this.cargarProductos()
-},
+    mostrarNotif(texto, tipo="success"){
 
-methods:{
+      const tipos = {
+        success:{ color:"#e8f5e9", icon:"mdi-check-circle", iconColor:"green" },
+        error:{ color:"#ffebee", icon:"mdi-alert-circle", iconColor:"red" },
+        warning:{ color:"#fff3e0", icon:"mdi-delete", iconColor:"orange" },
+        info:{ color:"#e3f2fd", icon:"mdi-information", iconColor:"blue" }
+      }
 
-async cargarProductos(){
+      const t = tipos[tipo]
 
-const res = await fetch("http://localhost:8081/api/productos",{
-credentials:"include"
-})
+      this.notifMessage = texto
+      this.notifColor = t.color
+      this.notifIcon = t.icon
+      this.notifIconColor = t.iconColor
+      this.dialogNotif = true
 
-this.productos = await res.json()
+      setTimeout(() => this.dialogNotif = false, 2500)
+    },
 
-},
+    async cargarProductos() {
+      try {
+        const res = await fetch("http://localhost:8081/api/productos");
+        const data = await res.json();
 
-abrirDialogo(){
+        // 🔥 ORDEN DESC (nuevos arriba)
+        this.productos = data
+          .sort((a,b) => b.id - a.id)
+          .map(p => ({
+            id: p.id,
+            nombre: p.nombre,
+            variedad: p.variedad || "Sin variedad",
+            precio: p.precio,
+            stock: p.stock || 0,
+            categoriaId: p.categoriaId,
+            imagenProducto: p.imagen || ""
+          }));
 
-this.editando=false
+      } catch (err) {
+        console.error(err);
+        this.mostrarNotif("Error cargando productos", "error");
+      }
+    },
 
-this.producto={
-id:null,
-nombre:"",
-precio:0,
-descripcion:""
-}
+    abrirDialogo(item = null) {
 
-this.dialog=true
+      if (item) {
+        this.editando = true;
+        this.producto = { ...item };
+      } else {
+        this.editando = false;
+        this.producto = {
+          id: null,
+          nombre: "",
+          variedad: "",
+          precio: 0,
+          stock: 0,
+          categoriaId: 1,
+          imagenProducto: ""
+        };
+      }
 
-},
+      this.dialog = true;
+    },
 
-editarProducto(item){
+    async guardarProducto() {
+      try {
 
-this.editando=true
-this.producto={...item}
-this.dialog=true
+        const body = {
+          nombre: this.producto.nombre,
+          variedad: this.producto.variedad,
+          precio: this.producto.precio,
+          stock: this.producto.stock,
+          categoriaId: this.producto.categoriaId,
+          imagen: this.producto.imagenProducto
+        };
 
-},
+        const url = this.editando
+          ? `http://localhost:8081/api/productos/${this.producto.id}`
+          : `http://localhost:8081/api/productos`;
 
-async guardarProducto(){
+        const res = await fetch(url, {
+          method: this.editando ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
 
-const url = this.editando
-? `http://localhost:8081/api/productos/${this.producto.id}`
-: `http://localhost:8081/api/productos`
+        if (!res.ok) throw new Error();
 
-const method = this.editando ? "PUT" : "POST"
+        await this.cargarProductos();
+        this.dialog = false;
 
-await fetch(url,{
-method:method,
-credentials:"include",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify(this.producto)
-})
+        this.mostrarNotif(
+          this.editando
+            ? "✏️ Producto actualizado"
+            : "✅ Producto agregado",
+          "success"
+        );
 
-this.dialog=false
-this.cargarProductos()
+      } catch (err) {
+        console.error(err);
+        this.mostrarNotif("❌ Error al guardar", "error");
+      }
+    },
 
-},
+    async eliminarProducto(id) {
 
-async eliminarProducto(id){
+      if (!confirm("¿Eliminar producto?")) return;
 
-if(!confirm("¿Eliminar producto?")) return
+      try {
+        await fetch(`http://localhost:8081/api/productos/${id}`, {
+          method: "DELETE"
+        });
 
-await fetch(`http://localhost:8081/api/productos/${id}`,{
-method:"DELETE",
-credentials:"include"
-})
+        this.productos = this.productos.filter(p => p.id !== id);
 
-this.cargarProductos()
+        this.mostrarNotif("🗑 Producto eliminado", "warning");
 
-}
+      } catch (err) {
+        console.error(err);
+        this.mostrarNotif("❌ Error al eliminar", "error");
+      }
+    }
 
-}
+  }
 
-}
+};
 </script>
+
+<style scoped>
+.product-card{
+  transition:0.2s;
+  margin-bottom:12px;
+}
+.product-card:hover{
+  transform:translateY(-5px);
+  box-shadow:0 8px 20px rgba(0,0,0,0.1);
+}
+.v-col{
+  padding-left:6px!important;
+  padding-right:6px!important;
+}
+</style>

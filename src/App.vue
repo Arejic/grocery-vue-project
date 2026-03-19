@@ -1,14 +1,15 @@
 <template>
   <v-app>
 
-    <Navbar />
+    <!-- Navbar -->
+    <Navbar v-if="!$route.meta.hideNavbar" />
 
     <v-main>
       <router-view/>
     </v-main>
 
-    <!-- Global -->
-    <AIAssistant />
+    <!-- 🔥 Chat ocultable por ruta -->
+    <AIAssistant v-if="!$route.meta.hideChat" />
 
   </v-app>
 </template>
